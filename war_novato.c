@@ -18,17 +18,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <stdbool.h>
 
-// --- Constantes Globais ---
-// Definem valores fixos para o número de territórios, missões e tamanho máximo de strings, facilitando a manutenção.
+// **** Constantes Globais ****
+// **** Definem valores fixos para o número de territórios, missões e tamanho máximo de strings, facilitando a manutenção. ****
+
 #define MAX_TERRITORIOS 5
 #define TAM_NOME 30
 #define TAM_COR 10
 
-// --- Estrutura de Dados ---
-// Define a estrutura para um território, contendo seu nome, a cor do exército que o domina e o número de tropas.
-// Criação da struct: definir uma struct chamada Territorio com os campos char nome[30], char cor[10] e int tropas
+// **** Estrutura de Dados ****
+
+/// @brief Define a estrutura para um território, contendo seu nome, a cor do exército que o domina e o número de tropas.
+/// Criação da struct: definir uma struct chamada Territorio com os campos char nome[30], char cor[10] e int tropas.
 struct Territorio
 {
     char nome[TAM_NOME];
@@ -36,25 +39,41 @@ struct Territorio
     int tropas;
 };
 
-// --- Protótipos das Funções ---
-// Declarações antecipadas de todas as funções que serão usadas no programa, organizadas por categoria.
-// Funções de setup e gerenciamento de memória:
-// Funções de interface com o usuário:
-// inicializarTerritorios():
-// Preenche os dados iniciais de cada território no mapa (nome, cor do exército, número de tropas).
-// Esta função modifica o mapa passado por referência (ponteiro).
+// **** Protótipos das Funções ****
 
-// Funções de lógica principal do jogo:
-// Funções utilitárias:
-// Limpa o buffer de entrada do teclado (stdin), evitando problemas com leituras consecutivas de scanf e getchar.
+//**** Declarações antecipadas de todas as funções que serão usadas no programa, organizadas por categoria. ****
+
+//**** Funções de setup e gerenciamento de memória ****
+
+// Não implementado nesse desafio.
+
+// **** Funções de interface com o usuário: ****
+
+// Não implementado nesse desafio.
+
+// **** Funções de lógica principal do jogo: ****
+
+// Não implementado nesse desafio.
+
+// **** Funções utilitárias: ****
+
+/// @brief Limpa o buffer de entrada do teclado (stdin), evitando problemas com leituras consecutivas de scanf e getchar.
 void limparBufferEntrada()
 {
     int c;
-    while ((c = getchar()) != '\n' && c != EOF);    
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
 }
 
-// --- Função Principal (main). Ponto de entrada do programa. ---
-// Função principal que orquestra o fluxo do jogo, chamando as outras funções em ordem.
+/// @brief Função para limpar '\n' deixado pelo fgets.
+/// @param str Conteúdo do texto a ser analisado e limpo.
+void limparEnter(char* str) {
+    str[strcspn(str, "\n")] = '\0';
+}
+
+/// @brief Função Principal (main). Ponto de entrada do programa. 
+/// Orquestra o fluxo do jogo, chamando as outras funções em ordem.
+/// @return Número inteiro. Zero em caso de sucesso, Exemplo: EXIT_SUCCESS. Ou diferente de zero, em caso de falha, Exemplo: EXIT_FAILURE.
 int main()
 {
     // 1. Configuração Inicial (Setup):
@@ -78,11 +97,12 @@ int main()
 
     struct Territorio territorios[MAX_TERRITORIOS];
     int totalTerritorios = 0;
-    bool finalizar = false;
+
+    bool finalizar = false;    
 
     do
     {
-        int opcao;
+        int opcao; // Vamos evitar reter um cache de uma escolha anterior e precisar monitorar o valor da opção posteriormente.
 
         printf("==============================\n");
         printf("============= WAR ============\n");
@@ -104,12 +124,14 @@ int main()
             {
                 printf("Digite o Nome do Territorio: \n");
                 fgets(territorios[totalTerritorios].nome, TAM_NOME, stdin);
+                limparEnter(territorios[totalTerritorios].nome);
 
                 printf("Digite a Cor do Territorio: \n");
                 fgets(territorios[totalTerritorios].cor, TAM_COR, stdin);
+                limparEnter(territorios[totalTerritorios].cor);
 
-                territorios[totalTerritorios].nome[strcspn(territorios[totalTerritorios].nome, "\n")] = '\0';
-                territorios[totalTerritorios].cor[strcspn(territorios[totalTerritorios].cor, "\n")] = '\0';
+                //territorios[totalTerritorios].nome[strcspn(territorios[totalTerritorios].nome, "\n")] = '\0';
+                //territorios[totalTerritorios].cor[strcspn(territorios[totalTerritorios].cor, "\n")] = '\0';
 
                 printf("Digite o Número de Tropas do Territorio: \n");
                 scanf("%d", &territorios[totalTerritorios].tropas);
@@ -130,7 +152,7 @@ int main()
             printf("=== Listagem de Territórios cadastrados. === \n");
 
             if (totalTerritorios == 0)
-            {                
+            {
                 printf("=== Nenhum Território foi cadastrado ainda. === \n");
             }
             else
@@ -138,8 +160,9 @@ int main()
                 for (int i = 0; i < totalTerritorios; i++)
                 {
                     printf("======================================== \n");
+                    printf("TERRITORIO %d\n", i + 1); // Vamos evitar exibir o item baseado no índice zero.
                     printf("Nome: %s\n", territorios[i].nome);
-                    printf("Cor: %s\n", territorios[i].cor);
+                    printf("Dominado por: Exercito %s\n", territorios[i].cor);
                     printf("Número de Tropas: %d\n", territorios[i].tropas);
                 }
                 printf("======================================== \n");
@@ -147,12 +170,11 @@ int main()
 
             break;
 
-        case 0:
+        case 0:            
             finalizar = true;
             printf("=== Saindo do sistema. Operação encerrada. === \n");
             break;
-
-        default:            
+        default:
             printf("=== Opção inválida. === \n");
             printf("=== Pressione Enter para continuar. === \n");
             getchar();
@@ -161,7 +183,7 @@ int main()
 
     } while (!finalizar);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // --- Implementação das Funções ---
@@ -205,4 +227,4 @@ int main()
 // Retorna 1 (verdadeiro) se a missão foi cumprida, e 0 (falso) caso contrário.
 
 // limparBufferEntrada():
-// Implementado.
+// Implementado neste desafio.
