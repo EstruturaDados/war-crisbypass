@@ -67,11 +67,12 @@ void limparBufferEntrada()
 
 /// @brief Função para limpar '\n' deixado pelo fgets.
 /// @param str Conteúdo do texto a ser analisado e limpo.
-void limparEnter(char* str) {
+void limparEnter(char *str)
+{
     str[strcspn(str, "\n")] = '\0';
 }
 
-/// @brief Função Principal (main). Ponto de entrada do programa. 
+/// @brief Função Principal (main). Ponto de entrada do programa.
 /// Orquestra o fluxo do jogo, chamando as outras funções em ordem.
 /// @return Número inteiro. Zero em caso de sucesso, Exemplo: EXIT_SUCCESS. Ou diferente de zero, em caso de falha, Exemplo: EXIT_FAILURE.
 int main()
@@ -97,22 +98,21 @@ int main()
 
     struct Territorio territorios[MAX_TERRITORIOS];
     int totalTerritorios = 0;
-
-    bool finalizar = false;    
+    int opcao;
 
     do
     {
-        int opcao; // Vamos evitar reter um cache de uma escolha anterior e precisar monitorar o valor da opção posteriormente.
+        opcao = -1; // Vamos evitar reter o cache anterior do valor, para possibilitar a alteração da opção pelo usuário.
 
         printf("==============================\n");
-        printf("============= WAR ============\n");
+        printf("===========💣 WAR 💣=========\n");
         printf("1 - Cadastrar novos territorios. \n");
         printf("2 - Listar todos os territorios. \n");
         printf("0 - Sair. \n");
         printf("Escolha uma opção: \n");
-
+        
         scanf("%d", &opcao);
-        limparBufferEntrada();
+        limparBufferEntrada();        
 
         switch (opcao)
         {
@@ -130,9 +130,6 @@ int main()
                 fgets(territorios[totalTerritorios].cor, TAM_COR, stdin);
                 limparEnter(territorios[totalTerritorios].cor);
 
-                //territorios[totalTerritorios].nome[strcspn(territorios[totalTerritorios].nome, "\n")] = '\0';
-                //territorios[totalTerritorios].cor[strcspn(territorios[totalTerritorios].cor, "\n")] = '\0';
-
                 printf("Digite o Número de Tropas do Territorio: \n");
                 scanf("%d", &territorios[totalTerritorios].tropas);
                 limparBufferEntrada();
@@ -147,6 +144,7 @@ int main()
             }
 
             break;
+
         case 2:
             // Listagem de territorios
             printf("=== Listagem de Territórios cadastrados. === \n");
@@ -170,18 +168,20 @@ int main()
 
             break;
 
-        case 0:            
-            finalizar = true;
+        case 0:
+            // Sair.
             printf("=== Saindo do sistema. Operação encerrada. === \n");
             break;
-        default:
-            printf("=== Opção inválida. === \n");
-            printf("=== Pressione Enter para continuar. === \n");
-            getchar();
-            break;
-        }
 
-    } while (!finalizar);
+        default:
+            // Continua.            
+            printf("=== Opção inválida. === \n");
+            printf("=== Pressione Enter para continuar. === \n");            
+            limparBufferEntrada();
+            break;
+        }        
+
+    } while (opcao != 0);
 
     return EXIT_SUCCESS;
 }
