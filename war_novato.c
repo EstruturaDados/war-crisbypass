@@ -77,42 +77,46 @@ void limparEnter(char *str)
 /// @return Número inteiro. Zero em caso de sucesso, Exemplo: EXIT_SUCCESS. Ou diferente de zero, em caso de falha, Exemplo: EXIT_FAILURE.
 int main()
 {
-    // 1. Configuração Inicial (Setup):
-    // - Define o locale para português.
-    // - Inicializa a semente para geração de números aleatórios com base no tempo atual.
-    // - Aloca a memória para o mapa do mundo e verifica se a alocação foi bem-sucedida.
-    // - Preenche os territórios com seus dados iniciais (tropas, donos, etc.).
-    // - Define a cor do jogador e sorteia sua missão secreta.
+#pragma region Instrucoes
+// 1. Configuração Inicial (Setup):
+// - Define o locale para português.
+// - Inicializa a semente para geração de números aleatórios com base no tempo atual.
+// - Aloca a memória para o mapa do mundo e verifica se a alocação foi bem-sucedida.
+// - Preenche os territórios com seus dados iniciais (tropas, donos, etc.).
+// - Define a cor do jogador e sorteia sua missão secreta.
 
-    // 2. Laço Principal do Jogo (Game Loop):
-    // - Roda em um loop 'do-while' que continua até o jogador sair (opção 0) ou vencer.
-    // - A cada iteração, exibe o mapa, a missão e o menu de ações.
-    // - Lê a escolha do jogador e usa um 'switch' para chamar a função apropriada:
-    //   - Opção 1: Inicia a fase de ataque.
-    //   - Opção 2: Verifica se a condição de vitória foi alcançada e informa o jogador.
-    //   - Opção 0: Encerra o jogo.
-    // - Pausa a execução para que o jogador possa ler os resultados antes da próxima rodada.
+// 2. Laço Principal do Jogo (Game Loop):
+// - Roda em um loop 'do-while' que continua até o jogador sair (opção 0) ou vencer.
+// - A cada iteração, exibe o mapa, a missão e o menu de ações.
+// - Lê a escolha do jogador e usa um 'switch' para chamar a função apropriada:
+//   - Opção 1: Inicia a fase de ataque.
+//   - Opção 2: Verifica se a condição de vitória foi alcançada e informa o jogador.
+//   - Opção 0: Encerra o jogo.
+// - Pausa a execução para que o jogador possa ler os resultados antes da próxima rodada.
 
-    // 3. Limpeza:
-    // - Ao final do jogo, libera a memória alocada para o mapa para evitar vazamentos de memória.
+// 3. Limpeza:
+// - Ao final do jogo, libera a memória alocada para o mapa para evitar vazamentos de memória.
+#pragma endregion
 
     struct Territorio territorios[MAX_TERRITORIOS];
     int totalTerritorios = 0;
     int opcao;
 
+    printf("==============================\n");
+    printf(" ==========💣 WAR 💣=========\n");
+    printf("==============================\n");
+
     do
     {
-        opcao = -1; // Vamos evitar reter o cache anterior do valor, para possibilitar a alteração da opção pelo usuário.
-
-        printf("==============================\n");
-        printf("===========💣 WAR 💣=========\n");
-        printf("1 - Cadastrar novos territorios. \n");
+        opcao = -1; // Vamos evitar reter o cache anterior do valor, para recuperar a alteração da opção pelo usuário.
+        
+        printf("\n1 - Cadastrar novos territorios. \n");
         printf("2 - Listar todos os territorios. \n");
         printf("0 - Sair. \n");
-        printf("Escolha uma opção: \n");
-        
+        printf("Escolha uma opção: ");
+
         scanf("%d", &opcao);
-        limparBufferEntrada();        
+        limparBufferEntrada();
 
         switch (opcao)
         {
@@ -136,22 +140,22 @@ int main()
 
                 totalTerritorios++;
 
-                printf("=== Território cadastrado com sucesso. === \n");
+                printf("\n=== Território cadastrado com sucesso. === \n");
             }
             else
             {
-                printf("=== O número limite de Territórios foi atingido. === \n");
+                printf("\n=== O número limite de Territórios foi atingido. === \n");
             }
 
             break;
 
         case 2:
             // Listagem de territorios
-            printf("=== Listagem de Territórios cadastrados. === \n");
+            printf("\n=== Listagem de Territórios cadastrados. === \n");
 
             if (totalTerritorios == 0)
             {
-                printf("=== Nenhum Território foi cadastrado ainda. === \n");
+                printf("\n=== Nenhum Território foi cadastrado ainda. === \n");
             }
             else
             {
@@ -170,23 +174,23 @@ int main()
 
         case 0:
             // Sair.
-            printf("=== Saindo do sistema. Operação encerrada. === \n");
+            printf("\n=== Saindo do sistema. Operação encerrada. === \n");
             break;
 
         default:
-            // Continua.            
-            printf("=== Opção inválida. === \n");
-            printf("=== Pressione Enter para continuar. === \n");            
+            // Continua.
+            printf("\n=== Opção inválida. === \n");
+            printf("\n=== Pressione Enter para continuar. === \n");
             limparBufferEntrada();
             break;
-        }        
+        }
 
     } while (opcao != 0);
 
     return EXIT_SUCCESS;
 }
 
-// --- Implementação das Funções ---
+#pragma region Implementacao_das_Funcoes
 
 // alocarMapa():
 // Aloca dinamicamente a memória para o vetor de territórios usando calloc.
@@ -228,3 +232,5 @@ int main()
 
 // limparBufferEntrada():
 // Implementado neste desafio.
+
+#pragma endregion
