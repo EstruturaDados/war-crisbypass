@@ -51,6 +51,7 @@ void limparBufferEntrada()
     while ((c = getchar()) != '\n' && c != EOF)
         ;
 }
+
 /// @brief Função para limpar '\n' deixado pelo fgets.
 /// @param str Conteúdo do texto a ser analisado e limpo.
 void limparEnter(char *str)
@@ -66,17 +67,19 @@ void limparEnter(char *str)
 Territorio *alocarMapa(int numTerritorios)
 {
     // calloc converte implicitamente para qualquer outro tipo de ponteiro. Portanto, o cast aqui é opcional.
+    // Mas não foi estabelecida nenhuma convenção para o uso. Por isso, foi mantido.
 
-    Territorio *vetor = calloc(numTerritorios, sizeof(Territorio));
+    Territorio *vetor = (Territorio *)calloc(numTerritorios, sizeof(Territorio));
 
     if (vetor == NULL)
     {
-        printf(" ❌  Erro ao alocar memória!\n");
+        printf(" ❌  Erro ao alocar memória para o mapa.\n");
         return NULL;
     }
 
     return vetor;
 }
+
 /// @brief Libera a memória previamente alocada para o mapa usando free.
 /// @param mapa Ponteiro para o vetor de territorios.
 void liberarMemoria(Territorio *mapa)
@@ -112,6 +115,7 @@ void cadastrarTerritorios(Territorio *mapa, int numTerritorios)
         limparBufferEntrada();
     }
 }
+
 /// @brief Mostra o estado atual de todos os territórios no mapa, formatado como uma tabela.
 /// @param mapa Ponteiro para o vetor de territórios. Usa 'const' para garantir que a função apenas leia os dados do mapa, sem modificá-los.
 /// @param tamanho Número representando o tamanho do vetor.
@@ -151,9 +155,8 @@ void atacar(Territorio *atacante, Territorio *defensor)
     printf("\n ⚔️  Ataque de %s (%d) contra %s (%d)\n", atacante->nome, atacante->tropas, defensor->nome, defensor->tropas);
     printf("\n 🎲  Rolagem da dados: atacante => %d | defensor => %d\n", dadoAtacante, dadoDefensor);
 
-    // Não foi especificado nas regras se o atacante precisa de mais de uma investida para vencer.
-    // Mas ainda assim, pelo comportamento apresentado na vídeo aula, podemos implementar uma lógica semelhante à do defensor.
-    if (dadoAtacante > dadoDefensor)
+    // Pelo comportamento apresentado na vídeo aula, nos conteúdos e de acordo com o arquivo README.md, vamos implementar a lógica.
+    if (dadoAtacante >= dadoDefensor)
     {
         printf("\n ⚔️  Ataque bem-sucedido! O defensor perde 1 tropa.\n");
         defensor->tropas -= 1;
@@ -173,6 +176,7 @@ void atacar(Territorio *atacante, Territorio *defensor)
     }
     else
     {
+        // Caso contrário, a defesa é favorecida.
         printf("\n 🛡️  Defesa bem-sucedida! O atacante perde 1 tropa.\n");
         atacante->tropas -= 1;
     }
@@ -259,7 +263,7 @@ int main()
 
         exibirMapa(mapa, numTerritorios);
 
-        printf("\n ↩️  Deseja realizar outro ataque? (s/n): ");
+        printf("\n 🔁  Deseja realizar outro ataque? (s/n): ");
         continuar = getchar();
         limparBufferEntrada();
 
