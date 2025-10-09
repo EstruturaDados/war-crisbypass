@@ -96,21 +96,21 @@ void liberarMemoria(Territorio *mapa)
 /// @param numTerritorios Número de territórios alocados.
 void cadastrarTerritorios(Territorio *mapa, int numTerritorios)
 {
-    printf("\n=== Cadastro dos Territórios ===\n");
+    printf("\n==== Cadastro dos Territórios ====\n");
 
     for (int i = 0; i < numTerritorios; i++)
     {
-        printf("Território %d\n", i + 1);
+        printf("\nTerritório %d\n", i + 1);
 
-        printf("Nome: \n");
+        printf("Nome: ");
         fgets(mapa[i].nome, sizeof(mapa[i].nome), stdin);
         limparEnter(mapa[i].nome);
 
-        printf("Cor do exército: \n");
+        printf("Cor do exército: ");
         fgets(mapa[i].cor, sizeof(mapa[i].cor), stdin);
         limparEnter(mapa[i].cor);
 
-        printf("Número de tropas: \n");
+        printf("Número de tropas: ");
         scanf("%d", &mapa[i].tropas);
         limparBufferEntrada();
     }
@@ -121,7 +121,7 @@ void cadastrarTerritorios(Territorio *mapa, int numTerritorios)
 /// @param tamanho Número representando o tamanho do vetor.
 void exibirMapa(Territorio *mapa, int tamanho)
 {
-    printf("\n=== 🌍  MAPA DO MUNDO - ESTADO ATUAL ===\n\n");
+    printf("\n==== 🌍  MAPA DO MUNDO - ESTADO ATUAL ====\n\n");
     // Evitar mostrar o número do exército baseado no índice zero.
     for (int i = 0; i < tamanho; i++)
     {
@@ -151,8 +151,8 @@ void atacar(Territorio *atacante, Territorio *defensor)
     // Simula a rolagem dos dados (1 a 6). Vamos evitar o retorno do valor zero.
     int dadoAtacante = rand() % 6 + 1, dadoDefensor = rand() % 6 + 1;
 
-    printf("\n=== RESULTADO DO ATAQUE ===\n");
-    printf("\n ⚔️  Ataque de %s (%d) contra %s (%d)\n", atacante->nome, atacante->tropas, defensor->nome, defensor->tropas);
+    printf("\n==== RESULTADO DO ATAQUE ====\n");
+    printf("\n ⚔️  Ataque de %s (%d tropas) contra 🛡️  defesa de %s (%d tropas)\n", atacante->nome, atacante->tropas, defensor->nome, defensor->tropas);
     printf("\n 🎲  Rolagem da dados: atacante => %d | defensor => %d\n", dadoAtacante, dadoDefensor);
 
     // Pelo comportamento apresentado na vídeo aula, nos conteúdos e de acordo com o arquivo README.md, vamos implementar a lógica.
@@ -171,7 +171,7 @@ void atacar(Territorio *atacante, Territorio *defensor)
             defensor->tropas += tropasTransferidas;
             atacante->tropas -= tropasTransferidas;
 
-            printf("O território %s agora pertence a %s com %d tropas.\n", defensor->nome, defensor->cor, defensor->tropas);
+            printf("\nO território %s agora pertence a %s com %d tropa(s).\n", defensor->nome, defensor->cor, defensor->tropas);
         }
     }
     else
@@ -236,6 +236,8 @@ int main()
     {
         int idAtacante, idDefensor;
 
+        exibirMapa(mapa, numTerritorios);
+
         printf("\n=== FASE DE ATAQUE ===\n");
 
         printf("\n ⚔️  Escolha o território atacante [ID] de %d a %d, ou 0 para sair: ", 1, numTerritorios);
@@ -261,7 +263,7 @@ int main()
         // Como o vetor é baseado em índice zero, precisamos informar a posição atual adequada.
         atacar(&mapa[idAtacante - 1], &mapa[idDefensor - 1]);
 
-        exibirMapa(mapa, numTerritorios);
+        
 
         printf("\n 🔁  Deseja realizar outro ataque? (s/n): ");
         continuar = getchar();
@@ -276,7 +278,7 @@ int main()
     return EXIT_SUCCESS;
 }
 
-#pragma region Implementacao_das_Funcoes
+#pragma region Info_Implementacao_das_Funcoes
 
 // alocarMapa():
 // Implementado.
