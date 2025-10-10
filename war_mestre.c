@@ -23,8 +23,8 @@ typedef struct
 
 typedef struct
 {
-    char *corRemanescente;
-    int razaoTropas;
+    char corRemanescente[TAM_COR];
+    int calcTropas;
 } MissaoInfo;
 
 // **** Protótipos das Funções ****
@@ -115,12 +115,10 @@ int verificarCondicaoMissao(
     int tamanho,
     const char *corJogador,
     int (*condicao)(int, int),
-    int valorComparacao,
-    int valorEsperado);
+    int calcTropas,
+    int territoriosAlmejados);
 
 MissaoInfo *missaoInfo = NULL;
-
-// Territorio *remanescente = NULL;
 
 char *format(const char *fmt, ...);
 
@@ -161,6 +159,13 @@ int main()
     scanf("%d", &numTerritorios); // Em caso de letra, corresponderá a um código numérico. Não foi solicitada a validação de todas as entradas do jogador.
     limparBufferEntrada();
 
+    if (numTerritorios < 2)
+    {
+        // Não se trata de exceções sem tratamento aqui, mas sim entradas inválidas do jogador.
+        printf("\n==== ⚠️  Não há territórios inimigos para enfrentar. Jogo finalizado. \n====");
+        return EXIT_SUCCESS;
+    }
+
     // Alocação dinâmica de memória para os territórios
     Territorio *mapa = alocarMapa(numTerritorios);
 
@@ -173,7 +178,7 @@ int main()
     // Cadastrando os territórios.
     cadastrarTerritorios(mapa, numTerritorios);
 
-    // Atribuir missão ao jogador e armazenar as missões dinamicamente. Dessa forma, podemos evitar
+    // Atribuir missão ao jogador usando armazenamento dinâmico de missões. Dessa forma, podemos evitar
     // sortear missões desalinhadas com o contexto do cadastro de territórios, como cores de jogadores,
     // ou números de tropas inconsistentes, sorteio de missões para jogadores não cadastrados, entre outros.
 
@@ -181,23 +186,29 @@ int main()
 
     char *missoes[numTerritorios + 4];
 
-    int maxTropas = 0;
+    int minimoTropas = 0;
 
     for (int i = 0; i < numTerritorios; i++)
     {
         missoes[i] = format("Eliminar todas as tropas da cor %s", mapa[i].cor);
-        if (maxTropas < mapa[i].tropas)
-            maxTropas = mapa[i].tropas;
+        if (minimoTropas > mapa[i].tropas || minimoTropas == 0) // Vamos usar o exército com menor número de tropas como base para os cálculos.
+            minimoTropas = mapa[i].tropas;
     }
-    int razaoTropas = maxTropas / numTerritorios; // Cálculo rudimentar para tentar evitar incoerências entre as informações da missão e dos exércitos.
+
+    // Usa a razão entre o mínimo de número de tropas e o total de territórios, para efetuar um cálculo rudimentar e
+    // tentar evitar incoerências entre as informações da missão e dos exércitos. Atribui um valor padrão de 1, em caso de
+    // recuo do valor, pois é uma referência necessária para ao menos poder ocupar um território em caso transferência na batalha.
+
+    int calcTropas = (minimoTropas / numTerritorios) / 2 > 1 ? (minimoTropas / numTerritorios) / 2 : 1;
+
     missoes[numTerritorios] = format("Conquistar %d territorios", numTerritorios);
-    missoes[numTerritorios + 1] = format("Controlar %d territorios com mais de %d tropas", numTerritorios, razaoTropas);
-    missoes[numTerritorios + 2] = format("Controlar %d territorios com menos de %d tropas", numTerritorios, razaoTropas);
-    missoes[numTerritorios + 3] = format("Controlar %d territorios com exatamente %d tropas", numTerritorios, razaoTropas);
+    missoes[numTerritorios + 1] = format("Controlar %d territorios com %d tropa(s) ou mais", numTerritorios, calcTropas);
+    missoes[numTerritorios + 2] = format("Controlar %d territorios com %d tropa(s) ou menos", numTerritorios, calcTropas);
+    missoes[numTerritorios + 3] = format("Controlar %d territorios com exatamente %d tropas", numTerritorios, calcTropas);
 
     missaoInfo = (MissaoInfo *)malloc(sizeof(MissaoInfo));
-    missaoInfo->corRemanescente = NULL;
-    missaoInfo->razaoTropas = razaoTropas;
+    strcpy(missaoInfo->corRemanescente, "");
+    missaoInfo->calcTropas = calcTropas;
 
     int totalMissoes = numTerritorios + 4;
 
@@ -205,7 +216,7 @@ int main()
 
     if (missaoJogador == NULL)
     {
-        printf(" ❌  Erro ao alocar memória para a missão.\n");
+        printf("\n ❌  Erro ao alocar memória para a missão.\n");
         return EXIT_FAILURE;
     }
 
@@ -272,7 +283,7 @@ int main()
 
     liberarMemoria(mapa, missaoJogador, missoes, totalMissoes);
 
-    printf("\n====  Fim de jogo! ====\n");
+    printf("\n====  Fim de jogo!!! ====\n");
 
     return EXIT_SUCCESS;
 }
@@ -296,9 +307,9 @@ void atribuirMissao(char **destino, char *missoes[], int totalMissoes)
 
 void exibirMissao(char *missao)
 {
-    printf("\n ================================================== \n");
+    printf("\n ====================================================================== \n");
     printf("\n 🔍  Sua missão: %s\n", missao);
-    printf("\n ================================================== \n");
+    printf("\n ====================================================================== \n");
 }
 
 int maiorQue(int a, int b) { return a > b; }
@@ -309,14 +320,18 @@ int igualA(int a, int b) { return a == b; }
 
 int verificarMissao(char *missao, const Territorio *mapa, int tamanho)
 {
-    const char *corJogador = missaoInfo->corRemanescente; // Cor do jogador que prevaleceu na batalha atual.
-    if (corJogador == NULL)
+    char corJogador[10];
+    strcpy(corJogador, missaoInfo->corRemanescente); // Cor do jogador que prevaleceu na batalha atual.
+
+    int vitoriaParcial = 0;
+
+    if (corJogador == "")
     {
-        //printf("⚠️ A cor do jogador ainda não foi definida. Realize ao menos um ataque primeiro.\n");
+        // A cor do jogador ainda não foi definida. Vamos checar depois de um ataque, pelo menos.\n");
         return 0;
     }
 
-    int razaoTropas = missaoInfo->razaoTropas; // Cálculo rudimentar para tentar evitar incoerências nos números da missão.
+    int calcTropas = missaoInfo->calcTropas; // Tenta evitar incoerências nos números da missão.
 
     int sucesso = 0;
 
@@ -329,28 +344,28 @@ int verificarMissao(char *missao, const Territorio *mapa, int tamanho)
         if (sucesso)
             printf("\n🎉 O exército %s eliminou todas as tropas da cor %s!\n", corJogador, corAlvo);
     }
-    // Aqui, 1 indica ao menos uma tropa por território, sendo que é necessário conquistar todos.
-    if (strstr(missao, "Conquistar ") != NULL && verificarCondicaoMissao(mapa, tamanho, corJogador, igualA, 1, tamanho))
+    // Ao menos uma tropa por território, sendo que é necessário conquistar todos.
+    if (strstr(missao, "Conquistar") != NULL && verificarCondicaoMissao(mapa, tamanho, corJogador, maiorOuIgualQue, calcTropas, tamanho))
     {
         printf("\n🎉  O exército %s conquistou %d territórios!\n", corJogador, tamanho);
         sucesso = 1;
     }
-    // Mais da média X de tropas.
-    if (strstr(missao, "territorios com mais de ") && verificarCondicaoMissao(mapa, tamanho, corJogador, maiorQue, razaoTropas, tamanho))
+    // Mais de X tropas.
+    if (strstr(missao, "tropa(s) ou mais") && verificarCondicaoMissao(mapa, tamanho, corJogador, maiorOuIgualQue, calcTropas, tamanho))
     {
-        printf("\n 🎉  O exército %s controla %d territórios com mais de %d tropas!\n", corJogador, tamanho, razaoTropas);
+        printf("\n 🎉  O exército %s controla %d territórios com %d tropa(s) ou mais!\n", corJogador, tamanho, calcTropas);
         sucesso = 1;
     }
-    // Menos da média X de tropas.
-    if (strstr(missao, "territorios com menos de ") && verificarCondicaoMissao(mapa, tamanho, corJogador, menorQue, razaoTropas, tamanho))
+    // Menos de X tropas.
+    if (strstr(missao, "tropa(s) ou menos") && verificarCondicaoMissao(mapa, tamanho, corJogador, menorOuIgualQue, calcTropas, tamanho))
     {
-        printf("\n 🎉  O exército %s controla %d territórios com menos de %d tropas!\n", corJogador, tamanho, razaoTropas);
+        printf("\n 🎉  O exército %s controla %d territórios com %d tropa(s) ou menos!\n", corJogador, tamanho, calcTropas);
         sucesso = 1;
     }
-    // Exatamente a média X de tropas.
-    if (strstr(missao, "territorios com exatamente ") && verificarCondicaoMissao(mapa, tamanho, corJogador, igualA, razaoTropas, tamanho))
+    // Exatamente X tropas.
+    if (strstr(missao, "territorios com exatamente") && verificarCondicaoMissao(mapa, tamanho, corJogador, igualA, calcTropas, tamanho))
     {
-        printf("\n 🎉  O exército %s controla %d territórios com exatamente %d tropas!\n", corJogador, tamanho, razaoTropas);
+        printf("\n 🎉  O exército %s controla %d territórios com exatamente %d tropas!\n", corJogador, tamanho, calcTropas);
         sucesso = 1;
     }
 
@@ -370,22 +385,41 @@ int verificarCondicaoMissao(
     int tamanho,
     const char *corJogador,
     int (*condicao)(int, int),
-    int valorComparacao,
-    int valorEsperado)
+    int calcTropas,
+    int territoriosAlmejados)
 {
-    int count = 0;
+    int territoriosAliados = 0;
+
+    int sucesso = 0;
 
     for (int i = 0; i < tamanho; i++)
     {
-        printf("\n===== MapaCor[i] => %s | CorJogador => %s Mapa[i].tropas => %d ValorComparacao => %d =====", mapa[i].cor, corJogador, mapa[i].tropas, valorComparacao);
-
-        if (strcmp(mapa[i].cor, corJogador) == 0 && condicao(mapa[i].tropas, valorComparacao))
+        if (strcmp(mapa[i].cor, corJogador) == 0 && condicao(mapa[i].tropas, calcTropas))
         {
-            count++;
+            territoriosAliados++;
+
+            if (territoriosAliados == territoriosAlmejados)
+            {
+                // Territórios almejados ocupados e requisitos de tropas atendidos.
+                sucesso = territoriosAliados == territoriosAlmejados;
+                break;
+            }
+        }
+        else if (strcmp(mapa[i].cor, corJogador) == 0)
+        {
+            territoriosAliados++;
+
+            if (territoriosAliados == territoriosAlmejados)
+            {
+                // Não adianta continuar o jogo para esse território. Embora tenha ocupado os territórios almejados, fracassou nos requisitos da missão.
+                printf("\n  ⚠️  A missão fracassou para %s, cor %s ! Embora tenha ocupado os territórios almejados, os requisitos de tropas não foram atendidos.\n",
+                       mapa[i].nome, mapa[i].cor);
+                break;
+            }
         }
     }
 
-    return count == valorEsperado;
+    return sucesso;
 }
 
 Territorio *alocarMapa(int numTerritorios)
@@ -411,8 +445,11 @@ void exibirMenuPrincipal(int *opcao)
     printf("2 - Verificar missão. \n");
     printf("0 - Sair. \n");
     printf("Escolha uma opção: ");
-
-    scanf("%d", opcao); // Já temos um ponteiro aqui. Não precisamos aplicar o &.
+    // Já temos um ponteiro aqui. Não precisamos aplicar o &.
+    if (scanf("%d", opcao) != 1)
+    {
+        *opcao = 3; // Vamos assumir um retorno para uma entrada inválida.
+    };
     limparBufferEntrada();
 }
 
@@ -432,19 +469,19 @@ void faseDeAtaque(Territorio *mapa, int *codigoRetorno, int numTerritorios)
 
     if (idAtacante > numTerritorios || idDefensor > numTerritorios)
     {
-        printf(" ⚠️  IDs inválidos. Tente novamente.\n");
+        printf("\n ⚠️  IDs inválidos. Tente novamente.\n");
         *codigoRetorno = 1;
         return;
     }
     else if (idAtacante == idDefensor)
     {
-        printf(" ⚠️  Um território não pode atacar a si mesmo.\n");
+        printf("\n ⚠️  Um território não pode atacar a si mesmo.\n");
         *codigoRetorno = 1;
         return;
     }
     else if (idAtacante < 1 || idDefensor < 1)
     {
-        printf(" ❌  A ação foi cancelada.\n");
+        printf("\n ❌  A ação foi cancelada.\n");
         *codigoRetorno = 2;
         return;
     }
@@ -480,7 +517,12 @@ void cadastrarTerritorios(Territorio *mapa, int numTerritorios)
         limparEnter(mapa[i].cor);
 
         printf("Número de tropas: ");
-        scanf("%d", &mapa[i].tropas);
+        while (scanf("%d", &mapa[i].tropas) != 1)
+        {
+            printf("\n==== Número inválido de tropas. ====\n");
+            printf("\nNúmero de tropas: ");
+            limparBufferEntrada();
+        };
         limparBufferEntrada();
     }
 }
@@ -506,13 +548,7 @@ void atacar(Territorio *atacante, Territorio *defensor)
     printf("\n ⚔️  Ataque de %s (%d tropas) contra 🛡️  defesa de %s (%d tropas)\n", atacante->nome, atacante->tropas, defensor->nome, defensor->tropas);
     printf("\n 🎲  Rolagem da dados: atacante => %d | defensor => %d\n", dadoAtacante, dadoDefensor);
 
-    if (missaoInfo->corRemanescente != NULL)
-    {
-        free(missaoInfo->corRemanescente);
-        missaoInfo->corRemanescente = NULL;
-    }
-
-    // Pelo comportamento apresentado na vídeo aula, nos conteúdos e de acordo com o arquivo README.md, vamos implementar a lógica.
+    // Pelo comportamento apresentado na vídeo aula da plataforma e de acordo com o arquivo README.md, vamos implementar a lógica.
     if (dadoAtacante >= dadoDefensor)
     {
         printf("\n ⚔️  Ataque bem-sucedido! O defensor perde 1 tropa.\n");
@@ -520,7 +556,7 @@ void atacar(Territorio *atacante, Territorio *defensor)
         // Se as tropas defensoras se esgotarem, a conquista do atacante é decretada.
         if (defensor->tropas < 1)
         {
-            printf("\n 🏆  Vitória do atacante!\n");
+            printf("\n Essa batalha foi vencida pelo atacante. Mas ainda falta vencer a guerra... \n");
             // Metade das tropas do atacante se movem para o território conquistado.
             int tropasTransferidas = atacante->tropas / 2;
 
@@ -528,10 +564,9 @@ void atacar(Territorio *atacante, Territorio *defensor)
             defensor->tropas += tropasTransferidas;
             atacante->tropas -= tropasTransferidas;
 
-            printf("\nO território %s agora pertence a %s com %d tropas.\n", defensor->nome, atacante->nome, defensor->tropas);
+            printf("\nO território %s agora pertence a %s com %d tropa(s).\n", defensor->nome, atacante->nome, defensor->tropas);
         }
 
-        missaoInfo->corRemanescente = malloc(strlen(atacante->cor) + 1);
         strcpy(missaoInfo->corRemanescente, atacante->cor);
     }
     else
@@ -540,7 +575,6 @@ void atacar(Territorio *atacante, Territorio *defensor)
         printf("\n 🛡️  Defesa bem-sucedida! O atacante perde 1 tropa.\n");
         atacante->tropas -= 1;
 
-        missaoInfo->corRemanescente = malloc(strlen(defensor->cor) + 1);
         strcpy(missaoInfo->corRemanescente, defensor->cor);
     }
 }
